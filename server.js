@@ -4,10 +4,9 @@ const app = express();
 const http = require("http").createServer(app);
 const io = require("socket.io")(http);
 
-// Serve static files from the "public" folder
 app.use(express.static(path.join(__dirname, "public")));
 
-// ✅ This fixes Render mobile loading issue
+// ✅ Fix: serve index.html explicitly
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
@@ -27,7 +26,7 @@ io.on("connection", (socket) => {
 
   socket.on("draw", (data) => {
     drawHistory.push(data);
-    if (drawHistory.length > 1000) drawHistory.shift(); // limit history size
+    if (drawHistory.length > 1000) drawHistory.shift();
     io.emit("draw", data);
     if (users[socket.id]) {
       io.emit("userDrawing", users[socket.id]);
@@ -57,5 +56,6 @@ io.on("connection", (socket) => {
   });
 });
 
-const PORT = process.env.PORT || 3000; 
+// ✅ The critical line for Render (no fixed 3000 port)
+const PORT = process.env.PORT || 3000;
 http.listen(PORT, () => console.log(`✅ Server running on port ${PORT}`));
