@@ -1,0 +1,15 @@
+{
+  "name": "realtime-whiteboard",
+  "version": "1.0.0",
+  "description": "Real-time collaborative whiteBoard",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "socket.io": "^4.7.1"
+  },
+  "author": "Your Name",
+  "license": "ISC"
+}
