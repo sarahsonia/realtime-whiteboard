@@ -1,94 +1,62 @@
 body {
+  font-family: 'Poppins', sans-serif;
+  background-color: #f5f5f5;
   margin: 0;
-  font-family: Poppins, sans-serif;
-  background: #f4f4f9;
+  padding: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: flex-start;
+  height: 100vh;
 }
 
 h1 {
-  margin: 20px;
+  margin: 15px 0;
   color: #333;
-}
-
-canvas {
-  border: 2px solid #ccc;
-  border-radius: 10px;
-  background: #fff;
-  cursor: crosshair;
 }
 
 .toolbar {
-  margin-top: 10px;
   display: flex;
   gap: 10px;
+  margin-bottom: 10px;
+  align-items: center;
   justify-content: center;
+  flex-wrap: wrap;
+  background: white;
+  padding: 10px 15px;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  position: relative;
+  z-index: 10;
 }
 
-button, input[type="color"], input[type="range"] {
-  padding: 8px 10px;
-  border-radius: 6px;
-  border: none;
-  background: #eaeaea;
+.toolbar input[type="color"],
+.toolbar input[type="range"] {
   cursor: pointer;
-  font-size: 14px;
-  transition: 0.3s;
+  border: none;
+  background: transparent;
+  height: 35px;
+}
+
+button {
+  cursor: pointer;
+  border: none;
+  padding: 8px 12px;
+  background-color: #4f46e5;
+  color: white;
+  border-radius: 6px;
+  transition: background 0.3s;
 }
 
 button:hover {
-  background: #d4d4d4;
+  background-color: #3730a3;
 }
 
-/* Floating popup */
-.popup-btn {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  background: #4b8bff;
-  color: white;
-  border: none;
-  border-radius: 50%;
-  width: 55px;
-  height: 55px;
-  font-size: 24px;
-  cursor: pointer;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-}
-
-.popup {
-  position: fixed;
-  bottom: 90px;
-  right: 20px;
-  background: white;
-  padding: 15px;
-  border-radius: 10px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-  width: 200px;
-}
-
-.popup.hidden {
-  display: none;
-}
-
-.popup h3 {
-  margin: 0 0 10px;
-  font-size: 16px;
-  color: #333;
-}
-
-.popup ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  font-size: 14px;
-  color: #555;
-}
-
-.status {
-  font-size: 16px;
-  color: #333;
-  margin: 8px 20px;
-  font-weight: 500;
-  font-family: "Poppins", sans-serif;
+canvas {
+  background-color: white;
+  border: 2px solid #ccc;
+  border-radius: 8px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  cursor: crosshair;
+  touch-action: none; /* ✅ important for mobile drawing */
 }

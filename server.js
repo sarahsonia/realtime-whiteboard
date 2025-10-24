@@ -6,7 +6,7 @@ const io = require("socket.io")(http);
 
 app.use(express.static(path.join(__dirname, "public")));
 
-// ✅ Fix: serve index.html explicitly
+// ✅ Fix for Render root route & deployment
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
@@ -56,6 +56,5 @@ io.on("connection", (socket) => {
   });
 });
 
-// ✅ The critical line for Render (no fixed 3000 port)
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3000; // ✅ Important for Render
 http.listen(PORT, () => console.log(`✅ Server running on port ${PORT}`));

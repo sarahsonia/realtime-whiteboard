@@ -9,10 +9,10 @@ let drawing = false;
 let tool = "pen";
 let color = "#000000";
 let size = 5;
-let lastX = 0, lastY = 0;
-let history = [];
+let lastX = 0;
+let lastY = 0;
+let undoStack = [];
 let redoStack = [];
-let username = prompt("Enter your name:");
 
 // UI elements
 const colorPicker = document.getElementById("colorPicker");
@@ -23,102 +23,130 @@ const markerBtn = document.getElementById("markerBtn");
 const highlighterBtn = document.getElementById("highlighterBtn");
 const undoBtn = document.getElementById("undoBtn");
 const redoBtn = document.getElementById("redoBtn");
-const popupBtn = document.getElementById("popupToggle");
-const popup = document.getElementById("userPopup");
-const userList = document.getElementById("userList");
-const status = document.getElementById("status");
 
-popupBtn.addEventListener("click", () => popup.classList.toggle("hidden"));
-socket.emit("setUsername", username);
-
-// Canvas setup
 ctx.lineCap = "round";
 ctx.lineJoin = "round";
 
-function saveState() {
-  if (history.length > 20) history.shift();
-  history.push(canvas.toDataURL());
-  redoStack = [];
-}
-
-function startPosition(e) {
+function startDrawing(x, y) {
   drawing = true;
-  [lastX, lastY] = [e.clientX - canvas.offsetLeft, e.clientY - canvas.offsetTop];
+  [lastX, lastY] = [x, y];
   saveState();
 }
 
-function endPosition() {
+function endDrawing() {
   drawing = false;
   ctx.beginPath();
-  socket.emit("userDrawing", ""); // clear status
 }
 
-function draw(e) {
+function drawLine(x, y) {
   if (!drawing) return;
-  const currentX = e.clientX - canvas.offsetLeft;
-  const currentY = e.clientY - canvas.offsetTop;
 
   ctx.beginPath();
   ctx.moveTo(lastX, lastY);
-  ctx.lineTo(currentX, currentY);
+  ctx.lineTo(x, y);
   ctx.strokeStyle = color;
-  ctx.lineWidth = size;
-  ctx.globalAlpha = tool === "pen" ? 1 : tool === "marker" ? 0.6 : 0.3;
-  if (tool === "highlighter") ctx.lineWidth = size * 3;
+  ctx.lineWidth = tool === "highlighter" ? size * 3 : size;
+  ctx.globalAlpha =
+    tool === "marker" ? 0.5 : tool === "highlighter" ? 0.3 : 1;
   ctx.stroke();
 
-  socket.emit("draw", { x0: lastX, y0: lastY, x1: currentX, y1: currentY, color, size, tool, username });
+  socket.emit("draw", {
+    x0: lastX,
+    y0: lastY,
+    x1: x,
+    y1: y,
+    color,
+    size,
+    tool,
+  });
 
-  [lastX, lastY] = [currentX, currentY];
+  [lastX, lastY] = [x, y];
 }
 
-socket.on("initDrawHistory", (history) => {
-  history.forEach((data) => drawLine(data));
+function saveState() {
+  undoStack.push(canvas.toDataURL());
+  if (undoStack.length > 20) undoStack.shift();
+}
+
+function undo() {
+  if (undoStack.length > 0) {
+    redoStack.push(undoStack.pop());
+    let imgData = undoStack[undoStack.length - 1];
+    let img = new Image();
+    img.src = imgData;
+    img.onload = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, 0);
+    };
+    socket.emit("undo");
+  }
+}
+
+function redo() {
+  if (redoStack.length > 0) {
+    let imgData = redoStack.pop();
+    let img = new Image();
+    img.src = imgData;
+    img.onload = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, 0);
+    };
+    socket.emit("redo", [imgData]);
+  }
+}
+
+// Mouse events
+canvas.addEventListener("mousedown", (e) =>
+  startDrawing(e.clientX - canvas.offsetLeft, e.clientY - canvas.offsetTop)
+);
+canvas.addEventListener("mouseup", endDrawing);
+canvas.addEventListener("mousemove", (e) =>
+  drawLine(e.clientX - canvas.offsetLeft, e.clientY - canvas.offsetTop)
+);
+
+// Touch events (for mobile)
+canvas.addEventListener("touchstart", (e) => {
+  e.preventDefault();
+  const touch = e.touches[0];
+  startDrawing(touch.clientX - canvas.offsetLeft, touch.clientY - canvas.offsetTop);
 });
 
-socket.on("draw", (data) => drawLine(data));
-
-socket.on("redrawAll", (data) => {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  data.forEach((d) => drawLine(d));
+canvas.addEventListener("touchmove", (e) => {
+  e.preventDefault();
+  const touch = e.touches[0];
+  drawLine(touch.clientX - canvas.offsetLeft, touch.clientY - canvas.offsetTop);
 });
 
-socket.on("clear", () => ctx.clearRect(0, 0, canvas.width, canvas.height));
-
-socket.on("userDrawing", (user) => {
-  status.textContent = user ? `${user} is drawing...` : "";
+canvas.addEventListener("touchend", (e) => {
+  e.preventDefault();
+  endDrawing();
 });
 
-socket.on("updateUsers", (users) => {
-  userList.innerHTML = "";
-  users.forEach(u => {
-    const li = document.createElement("li");
-    li.textContent = u;
-    userList.appendChild(li);
-  });
-});
-
-function drawLine(data) {
+// Socket listeners
+socket.on("draw", (data) => {
   ctx.beginPath();
   ctx.moveTo(data.x0, data.y0);
   ctx.lineTo(data.x1, data.y1);
   ctx.strokeStyle = data.color;
-  ctx.lineWidth = data.size;
-  ctx.globalAlpha = data.tool === "pen" ? 1 : data.tool === "marker" ? 0.6 : 0.3;
-  if (data.tool === "highlighter") ctx.lineWidth = data.size * 3;
+  ctx.lineWidth = data.tool === "highlighter" ? data.size * 3 : data.size;
+  ctx.globalAlpha =
+    data.tool === "marker" ? 0.5 : data.tool === "highlighter" ? 0.3 : 1;
   ctx.stroke();
-}
+});
 
-// Button events
-undoBtn.addEventListener("click", () => socket.emit("undo"));
-redoBtn.addEventListener("click", () => socket.emit("redo", redoStack));
+socket.on("clear", () => ctx.clearRect(0, 0, canvas.width, canvas.height));
+socket.on("undo", () => undo());
+socket.on("redo", (data) => redo(data));
+
+// Toolbar controls
 colorPicker.addEventListener("change", (e) => (color = e.target.value));
 sizePicker.addEventListener("change", (e) => (size = e.target.value));
-clearBtn.addEventListener("click", () => socket.emit("clear"));
+clearBtn.addEventListener("click", () => {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  socket.emit("clear");
+});
 penBtn.addEventListener("click", () => (tool = "pen"));
 markerBtn.addEventListener("click", () => (tool = "marker"));
 highlighterBtn.addEventListener("click", () => (tool = "highlighter"));
-
-canvas.addEventListener("mousedown", startPosition);
-canvas.addEventListener("mouseup", endPosition);
-canvas.addEventListener("mousemove", draw);
+undoBtn.addEventListener("click", undo);
+redoBtn.addEventListener("click", redo);

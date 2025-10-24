@@ -1,13 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Collaborative Whiteboard</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <h1>Collaborative Whiteboard</h1>
 
+  <!-- Toolbar -->
   <div class="toolbar">
     <input type="color" id="colorPicker" value="#000000">
     <input type="range" id="sizePicker" min="1" max="20" value="5">
@@ -19,17 +21,7 @@
     <button id="clearBtn">🧹 Clear</button>
   </div>
 
-  <!-- 👇 Add this line right below the toolbar -->
-  <p id="status" class="status"></p>
-
   <canvas id="board"></canvas>
-
-  <!-- Floating popup button -->
-  <div id="userPopup" class="popup hidden">
-    <h3>Connected Users</h3>
-    <ul id="userList"></ul>
-  </div>
-  <button id="popupToggle" class="popup-btn">👥</button>
 
   <script src="/socket.io/socket.io.js"></script>
   <script src="script.js"></script>
