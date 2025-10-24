@@ -1,9 +1,16 @@
 const express = require("express");
+const path = require("path");
 const app = express();
 const http = require("http").createServer(app);
 const io = require("socket.io")(http);
 
-app.use(express.static("public"));
+// Serve static files from the "public" folder
+app.use(express.static(path.join(__dirname, "public")));
+
+// ✅ This fixes Render mobile loading issue
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "index.html"));
+});
 
 let users = {};
 let drawHistory = [];
@@ -50,4 +57,5 @@ io.on("connection", (socket) => {
   });
 });
 
-http.listen(3000, () => console.log("Server running on http://localhost:3000"));
+const PORT = process.env.PORT || 3000; 
+http.listen(PORT, () => console.log(`✅ Server running on port ${PORT}`));
