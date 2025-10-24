@@ -6,11 +6,6 @@ const io = require("socket.io")(http);
 
 app.use(express.static(path.join(__dirname, "public")));
 
-// ✅ Fix for Render root route & deployment
-app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "index.html"));
-});
-
 let users = {};
 let drawHistory = [];
 
@@ -18,8 +13,8 @@ io.on("connection", (socket) => {
   console.log("A user connected:", socket.id);
 
   socket.on("setUsername", (username) => {
-    users[socket.id] = username;
-    console.log(`${username} joined the whiteboard`);
+    users[socket.id] = username || "Anonymous";
+    console.log(`${username} joined`);
     io.emit("updateUsers", Object.values(users));
     socket.emit("initDrawHistory", drawHistory);
   });
@@ -28,15 +23,12 @@ io.on("connection", (socket) => {
     drawHistory.push(data);
     if (drawHistory.length > 1000) drawHistory.shift();
     io.emit("draw", data);
-    if (users[socket.id]) {
-      io.emit("userDrawing", users[socket.id]);
-    }
+    io.emit("userDrawing", users[socket.id] || "Someone");
   });
 
   socket.on("clear", () => {
     drawHistory = [];
     io.emit("clear");
-    console.log("Board cleared");
   });
 
   socket.on("undo", () => {
@@ -56,5 +48,5 @@ io.on("connection", (socket) => {
   });
 });
 
-const PORT = process.env.PORT || 3000; // ✅ Important for Render
+const PORT = process.env.PORT || 3000;
 http.listen(PORT, () => console.log(`✅ Server running on port ${PORT}`));

@@ -14,7 +14,6 @@ let lastY = 0;
 let undoStack = [];
 let redoStack = [];
 
-// UI elements
 const colorPicker = document.getElementById("colorPicker");
 const sizePicker = document.getElementById("sizePicker");
 const clearBtn = document.getElementById("clearBtn");
@@ -23,6 +22,11 @@ const markerBtn = document.getElementById("markerBtn");
 const highlighterBtn = document.getElementById("highlighterBtn");
 const undoBtn = document.getElementById("undoBtn");
 const redoBtn = document.getElementById("redoBtn");
+const status = document.getElementById("status");
+
+// Ask for username
+let username = prompt("Enter your name:");
+socket.emit("setUsername", username);
 
 ctx.lineCap = "round";
 ctx.lineJoin = "round";
@@ -95,7 +99,7 @@ function redo() {
   }
 }
 
-// Mouse events
+// Mouse Events
 canvas.addEventListener("mousedown", (e) =>
   startDrawing(e.clientX - canvas.offsetLeft, e.clientY - canvas.offsetTop)
 );
@@ -104,19 +108,17 @@ canvas.addEventListener("mousemove", (e) =>
   drawLine(e.clientX - canvas.offsetLeft, e.clientY - canvas.offsetTop)
 );
 
-// Touch events (for mobile)
+// Touch Events
 canvas.addEventListener("touchstart", (e) => {
   e.preventDefault();
   const touch = e.touches[0];
   startDrawing(touch.clientX - canvas.offsetLeft, touch.clientY - canvas.offsetTop);
 });
-
 canvas.addEventListener("touchmove", (e) => {
   e.preventDefault();
   const touch = e.touches[0];
   drawLine(touch.clientX - canvas.offsetLeft, touch.clientY - canvas.offsetTop);
 });
-
 canvas.addEventListener("touchend", (e) => {
   e.preventDefault();
   endDrawing();
@@ -138,7 +140,17 @@ socket.on("clear", () => ctx.clearRect(0, 0, canvas.width, canvas.height));
 socket.on("undo", () => undo());
 socket.on("redo", (data) => redo(data));
 
-// Toolbar controls
+// Show who is drawing
+socket.on("userDrawing", (name) => {
+  status.textContent = `${name} is drawing...`;
+  status.classList.add("show");
+  clearTimeout(window.statusTimer);
+  window.statusTimer = setTimeout(() => {
+    status.classList.remove("show");
+  }, 1000);
+});
+
+// Toolbar
 colorPicker.addEventListener("change", (e) => (color = e.target.value));
 sizePicker.addEventListener("change", (e) => (size = e.target.value));
 clearBtn.addEventListener("click", () => {
